@@ -4,6 +4,7 @@
 #include <queue>
 #include <unordered_map>
 #include <fstream>
+#include <thread>
 #include <glm/gtx/transform.hpp>
 
 #include "vk_mem_alloc.h"
@@ -34,7 +35,8 @@ public:
 
 
 	//---------------------------------//
-	//Mesh Loading
+	//Utility - Mesh Loading
+	std::thread mesh_thread;
 	std::queue<std::pair<std::string, MESHTYPE>> mesh_queue;
 	void load_obj(const char* file_name);
 	void load_gltf(const char* file_name);
@@ -61,6 +63,7 @@ private:
 	VkDevice device;
 	VmaAllocator vma_allocator;
 
+	//Queue Info
 	VkQueue graphics_queue;
 	VkQueue present_queue;
 	VkQueue transfer_queue;
@@ -86,10 +89,10 @@ private:
 	//Rendering Data
 	std::vector<PerFrameData> frames;
 	ImageData draw_image;
-	VkExtent2D draw_extent;
+	ImageData shadowmap_image;
 	ImageData depth_image;
 
-	ImageData shadowmap_image;
+	VkExtent2D draw_extent;
 	VkSampler shadowmap_sampler;
 	
 	UniformBufferObject ubo_data;
@@ -99,7 +102,7 @@ private:
 	std::vector<MeshData> meshes;
 
 	//Descriptors
-	DescriptorBuilder descriptor_builder = {};
+	DescriptorBuilder descriptor_builder;
 	VkDescriptorSetLayout global_layout;
 	VkDescriptorSet global_set;
 
@@ -142,8 +145,6 @@ private:
 	VkCommandBuffer begin_single_time_transfer();
 	void end_single_time_transfer(VkCommandBuffer cmd);
 
-	//---------------------------------//
-	//Image Management
 	void transition_image(VkCommandBuffer cmd, VkImage image, VkImageLayout src, VkImageLayout dst);
 	void copy_image(VkCommandBuffer cmd, VkImage src_image, VkImage dst_image, VkExtent2D src_extent, VkExtent2D dst_extent);
 

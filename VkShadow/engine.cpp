@@ -53,6 +53,8 @@ Engine::~Engine() {
 	vkDestroySurfaceKHR(instance, surface, nullptr);
 	vkDestroyDevice(device, nullptr);
 	vkDestroyInstance(instance, nullptr);
+
+	mesh_thread.join();
 }
 
 void Engine::init() {
@@ -61,9 +63,8 @@ void Engine::init() {
 	init_commands();
 
 	mesh_queue.push(std::pair(file_paths.bunny_model, MESHTYPE::OBJ));
-	std::thread t(mesh_uploader, this);
-	t.detach();
-		
+	mesh_thread = std::thread(mesh_uploader, this);
+
 	init_swapchain();
 	init_draw_resources();
 	init_sync_structures();
