@@ -1,7 +1,7 @@
 #pragma once
 #include <stdexcept>
 #include <span>
-#include <optional>
+#include <queue>
 #include <unordered_map>
 #include <fstream>
 #include <glm/gtx/transform.hpp>
@@ -31,6 +31,10 @@ public:
 	bool logging_enabled = true;
 	bool minimized = false;
 	void run();
+
+
+	std::queue<std::string> mesh_queue;
+	void init_mesh(const char* file_name);
 
 private:
 	//Window
@@ -113,7 +117,6 @@ private:
 	void init_mesh_pipeline();
 	void init_shadow_pipeline();
 
-	void init_mesh(const char* file_name);
 
 	//Drawing
 	void draw();
@@ -140,3 +143,4 @@ static void framebuffer_resize_callback(GLFWwindow* window, int width, int heigh
 static void iconify_callback(GLFWwindow* window, int iconified);
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
+static void mesh_uploader(Engine* engine);

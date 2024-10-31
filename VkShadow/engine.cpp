@@ -57,15 +57,18 @@ Engine::~Engine() {
 void Engine::init() {
 	init_glfw();
 	init_vulkan();
+	init_commands();
+
+	mesh_queue.push(file_paths.bunny_model);
+	std::thread t(mesh_uploader, this);
+	t.detach();
+		
 	init_swapchain();
 	init_draw_resources();
-	init_commands();
 	init_sync_structures();
 	init_ubo_data();
 	init_descriptors();
 	init_pipelines();
-	
-	init_mesh(file_paths.bunny_model);
 }
 /*
 * init glfw, create window
@@ -418,7 +421,7 @@ void Engine::init_ubo_data() {
 	ubo_data = {};
 	ubo_data.model = glm::mat4(1.0f);
 	ubo_data.view = glm::lookAt(glm::vec3(0.0f, 2.0f, 2.0f), glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	ubo_data.proj = glm::perspective(glm::radians(70.0f), (16.0f / 9.0f), 1000.0f, 0.1f);
+	ubo_data.proj = glm::perspective(glm::radians(70.0f), (16.0f / 9.0f), 0.01f, 100.0f);
 	ubo_data.proj[1][1] *= -1;
 	ubo_data.Q = glm::transpose(glm::inverse(ubo_data.model));
 
@@ -549,11 +552,11 @@ void Engine::init_mesh_pipeline() {
 	pipeline_builder.set_shaders(vert_shader, frag_shader);
 	pipeline_builder.set_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 	pipeline_builder.set_polygon_mode(VK_POLYGON_MODE_FILL);
-	pipeline_builder.set_culling_mode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE);
+	pipeline_builder.set_culling_mode(VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
 	pipeline_builder.set_multisampling_none();
 	pipeline_builder.disable_blending();
-	//pipeline_builder.enable_depthtest(VK_TRUE, VK_COMPARE_OP_GREATER_OR_EQUAL);
-	pipeline_builder.disable_depthtest();
+	pipeline_builder.enable_depthtest(VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL);
+	//pipeline_builder.disable_depthtest();
 	pipeline_builder.set_color_attachment_format(draw_image.format);
 	pipeline_builder.set_depth_attachment_format(depth_image.format);
 	mesh_pipeline = pipeline_builder.build_pipeline(device);
@@ -619,6 +622,7 @@ void Engine::init_mesh(const char* file_name) {
 
 	MeshData mesh = upload_mesh(vertices, indices);
 	meshes.push_back(mesh);
+	LOG(1, "Loaded " + std::string(file_name));
 }
 
 /*
@@ -839,7 +843,7 @@ void Engine::create_swapchain(uint32_t width, uint32_t height) {
 			.format = VK_FORMAT_R8G8B8A8_UNORM,
 			.colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
 			})
-		.set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
+		.set_desired_present_mode(VK_PRESENT_MODE_MAILBOX_KHR)
 		.set_desired_extent(width, height)
 		.add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT)
 		.build();
@@ -972,10 +976,6 @@ void Engine::draw() {
 }
 
 void Engine::draw_geo(VkCommandBuffer cmd) {
-	VkClearValue clear_value = {};
-	clear_value.color = { {0.0f, 0.0f, 0.0f, 0.0f} };
-	clear_value.depthStencil = { 0.0f, 0 };
-
 	VkRenderingAttachmentInfo color_attachment = {};
 	color_attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
 	color_attachment.pNext = nullptr;
@@ -991,7 +991,7 @@ void Engine::draw_geo(VkCommandBuffer cmd) {
 	depth_attachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
 	depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	depth_attachment.clearValue = clear_value;
+	depth_attachment.clearValue.depthStencil.depth = 1.0f;
 
 	VkRenderingInfo rendering_info = {};
 	rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
@@ -1082,4 +1082,21 @@ static void cursor_position_callback(GLFWwindow* window, double xpos, double ypo
 {
 	Engine* engine = reinterpret_cast<Engine*>(glfwGetWindowUserPointer(window));
 	//engine->handle_cursor_pos(double xpos, double ypos)
+}
+
+static void mesh_uploader(Engine* engine) {
+	while (true) {
+		if (engine->mesh_queue.empty()) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			continue;
+		}
+
+		std::string filename = engine->mesh_queue.front();
+		engine->mesh_queue.pop();
+		if (filename == "QUIT") {
+			break;
+		}
+		engine->init_mesh(filename.c_str());
+	}
+	std::cout << "Mesh uploader exiting..." << std::endl;
 }

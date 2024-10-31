@@ -174,7 +174,7 @@ struct PipelineBuilder {
 		depth_stencil.maxDepthBounds = 1.0f;
 	}
 	void enable_depthtest(VkBool32 depth_write_enable, VkCompareOp op) {
-		depth_stencil.depthTestEnable = VK_FALSE;
+		depth_stencil.depthTestEnable = VK_TRUE;
 		depth_stencil.depthWriteEnable = depth_write_enable;
 		depth_stencil.depthCompareOp = op;
 		depth_stencil.depthBoundsTestEnable = VK_FALSE;
@@ -186,8 +186,8 @@ struct PipelineBuilder {
 	}
 	void set_color_attachment_format(VkFormat format) {
 		color_attachment_format = format;
-		rendering_info.pColorAttachmentFormats = &color_attachment_format;
 		rendering_info.colorAttachmentCount = 1;
+		rendering_info.pColorAttachmentFormats = &color_attachment_format;
 	}
 	void set_depth_attachment_format(VkFormat format) {
 		rendering_info.depthAttachmentFormat = format;
