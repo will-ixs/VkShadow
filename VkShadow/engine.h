@@ -15,7 +15,7 @@
 #include <tiny_obj_loader.h>
 
 #include "logger.h"
-#include "utils.h"
+#include "common.h"
 
 #define FRAMES_IN_FLIGHT 2
 
@@ -33,8 +33,18 @@ public:
 	void run();
 
 
-	std::queue<std::string> mesh_queue;
-	void init_mesh(const char* file_name);
+	//---------------------------------//
+	//Mesh Loading
+	std::queue<std::pair<std::string, MESHTYPE>> mesh_queue;
+	void load_obj(const char* file_name);
+	void load_gltf(const char* file_name);
+
+	//---------------------------------//
+	//Callback Handlers
+	void handle_minimize();
+	void handle_restore();
+	void handle_keypress(int key, int scanecode, int action, int mods);
+	void handle_cursor_pos(double xpos, double ypos);
 
 private:
 	//Window
@@ -72,6 +82,7 @@ private:
 	bool resize_requested = false;
 	uint32_t frame_number = 0;
 	uint32_t frame_counter = 0;
+	
 	//Rendering Data
 	std::vector<PerFrameData> frames;
 	ImageData draw_image;
@@ -118,10 +129,12 @@ private:
 	void init_shadow_pipeline();
 
 
+	//---------------------------------//
 	//Drawing
 	void draw();
 	void draw_geo(VkCommandBuffer cmd);
 
+	//---------------------------------//
 	//Utility
 	bool load_shader(VkDevice device, VkShaderModule* out_shader, const char* file_path);
 	MeshData upload_mesh(std::span<Vertex> vertices, std::span<uint32_t> indices);
@@ -129,6 +142,8 @@ private:
 	VkCommandBuffer begin_single_time_transfer();
 	void end_single_time_transfer(VkCommandBuffer cmd);
 
+	//---------------------------------//
+	//Image Management
 	void transition_image(VkCommandBuffer cmd, VkImage image, VkImageLayout src, VkImageLayout dst);
 	void copy_image(VkCommandBuffer cmd, VkImage src_image, VkImage dst_image, VkExtent2D src_extent, VkExtent2D dst_extent);
 
@@ -140,7 +155,7 @@ private:
 
 };
 static void framebuffer_resize_callback(GLFWwindow* window, int width, int height);
-static void iconify_callback(GLFWwindow* window, int iconified);
+static void minimize_callback(GLFWwindow* window, int iconified);
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
 static void mesh_uploader(Engine* engine);

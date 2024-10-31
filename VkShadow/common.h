@@ -25,18 +25,25 @@
 
 struct {
 
-	//const char* mesh_vert = "E:/Proj/Vs/VkShadow/shaders/spirv/mesh.vert.spv";
-	//const char* mesh_frag = "E:/Proj/Vs/VkShadow/shaders/spirv/mesh.frag.spv";
-	//const char* shadow_vert = "E:/Proj/Vs/VkShadow/shaders/spirv/shadow.vert.spv";
-	//const char* shadow_frag = "E:/Proj/Vs/VkShadow/shaders/spirv/shadow.frag.spv";
-	//const char* bunny_model = "E:/Proj/Vs/VkShadow/models/bunny.obj";
+	const char* mesh_vert = "E:/Proj/Vs/VkShadow/shaders/spirv/mesh.vert.spv";
+	const char* mesh_frag = "E:/Proj/Vs/VkShadow/shaders/spirv/mesh.frag.spv";
+	const char* shadow_vert = "E:/Proj/Vs/VkShadow/shaders/spirv/shadow.vert.spv";
+	const char* shadow_frag = "E:/Proj/Vs/VkShadow/shaders/spirv/shadow.frag.spv";
+	const char* bunny_model = "E:/Proj/Vs/VkShadow/models/bunny.obj";
 
-	const char* mesh_vert = "../../shaders/spirv/mesh.vert.spv";
-	const char* mesh_frag = "../../shaders/spirv/mesh.frag.spv";
-	const char* shadow_vert = "../../shaders/spirv/shadow.vert.spv";
-	const char* shadow_frag = "../../shaders/spirv/shadow.frag.spv";
-	const char* bunny_model = "../../models/bunny.obj";
+	//const char* mesh_vert = "../../shaders/spirv/mesh.vert.spv";
+	//const char* mesh_frag = "../../shaders/spirv/mesh.frag.spv";
+	//const char* shadow_vert = "../../shaders/spirv/shadow.vert.spv";
+	//const char* shadow_frag = "../../shaders/spirv/shadow.frag.spv";
+	//const char* bunny_model = "../../models/bunny.obj";
 } file_paths;
+
+enum MESHTYPE
+{
+	OBJ,
+	GLTF,
+	UNDEFINED
+};
 
 struct ImageData {
 	VkImage image;
