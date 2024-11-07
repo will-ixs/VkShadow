@@ -13,7 +13,11 @@ Engine::Engine(int w, int h)
 }
 
 Engine::~Engine() {
-	std::pair quit("QUIT", MESHTYPE::UNDEFINED);
+	MeshResource quit = { 
+		.file_path = "QUIT",
+		.model_mat = glm::mat4(0),
+		.type = MESHTYPE::UNDEFINED
+	};
 	mesh_queue.push(quit);
 
 	for (MeshData mesh : meshes) {
@@ -62,7 +66,9 @@ void Engine::init() {
 	init_vulkan();
 	init_commands();
 
-	mesh_queue.push(std::pair(file_paths.bunny_model, MESHTYPE::OBJ));
+	mesh_queue.push(model_res.bunny);
+	mesh_queue.push(model_res.teapot);
+	mesh_queue.push(model_res.square);
 	mesh_thread = std::thread(mesh_uploader, this);
 
 	init_swapchain();
@@ -76,16 +82,22 @@ void Engine::init() {
 
 void Engine::run() {
 	while (!glfwWindowShouldClose(window)) {
+		auto start_time = std::chrono::high_resolution_clock::now();
+
 		glfwPollEvents();
 
 		if (minimized) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			continue;
 		}
-		//TODO fps in window title
-		//glfwSetWindowTitle(window, "さよなら絶望先生");
 
 		draw();
+
+		auto stop_time = std::chrono::high_resolution_clock::now();;
+		std::ostringstream frame_time;
+		frame_time << std::chrono::duration_cast<std::chrono::milliseconds>(stop_time - start_time);;
+		std::string title = "Vulkan: " + frame_time.str();
+		glfwSetWindowTitle(window, title.c_str());
 	}
 
 	vkDeviceWaitIdle(device);
@@ -99,23 +111,25 @@ static void mesh_uploader(Engine* engine) {
 			continue;
 		}
 		
-		std::pair<std::string, MESHTYPE> res = engine->mesh_queue.front();
+		MeshResource res = engine->mesh_queue.front();
 		engine->mesh_queue.pop();
-		if (res.first == "QUIT") {
+		if (res.file_path == "QUIT") {
 			break;
 		}
 
-		switch (res.second)
+		switch (res.type)
 		{
 		case MESHTYPE::OBJ:
-			engine->load_obj(res.first.c_str());
+			engine->load_obj(res.file_path, res.model_mat);
 			break;
 		case MESHTYPE::GLTF:
-			engine->load_gltf(res.first.c_str());
+			engine->load_gltf(res.file_path, res.model_mat);
 			break;
 		default:
 			break;
 		}
 	}
-	std::cout << "Mesh uploader exiting..." << std::endl;
+	if (engine->logging_enabled) {
+		engine->logger.log(0, "Mesh uploader exiting...");
+	}
 }

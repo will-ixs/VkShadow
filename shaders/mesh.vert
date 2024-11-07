@@ -2,7 +2,6 @@
 #extension GL_EXT_buffer_reference : require
 
 layout(binding = 0) uniform UniformBufferObject {
-    mat4 model;
     mat4 view;
     mat4 proj;
 	mat4 Q;
@@ -34,15 +33,16 @@ layout(buffer_reference, std430) readonly buffer VertexBuffer{
 
 layout( push_constant ) uniform constants{
 	VertexBuffer vertex_buffer;
+	mat4 model;
 } pc;
 
 void main() 
 {	
 	Vertex v = pc.vertex_buffer.vertices[gl_VertexIndex];
-	gl_Position =  ubo.proj * ubo.view * ubo.model * vec4(v.position, 1.0f);
+	gl_Position =  ubo.proj * ubo.view * pc.model * vec4(v.position, 1.0f);
 	
 	//worldNorm = normalize(vec3(ubo.Q * vec4(v.normal, 1.0f)));
 	worldNorm = v.normal;
-	worldPos = ubo.model * vec4(v.position, 1.0f);
-	lightPos = ubo.lightproj * ubo.lightview * ubo.model * vec4(v.position, 1.0);
+	worldPos = pc.model * vec4(v.position, 1.0f);
+	lightPos = ubo.lightproj * ubo.lightview * pc.model * vec4(v.position, 1.0);
 }

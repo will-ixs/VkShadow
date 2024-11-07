@@ -150,6 +150,7 @@ void Engine::draw_geo(VkCommandBuffer cmd) {
 	PushConstants pcs;
 	for (const MeshData& mesh : meshes) {
 		pcs.vb_addr = mesh.vertex_buffer_address;
+		pcs.model = mesh.model_mat;
 		vkCmdPushConstants(cmd, mesh_pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &pcs);
 		vkCmdBindIndexBuffer(cmd, mesh.index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
 		vkCmdDrawIndexed(cmd, mesh.index_count, 1, 0, 0, 0);

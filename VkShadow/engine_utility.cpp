@@ -2,7 +2,8 @@
 /*
 create vert & ind vectors from OBJ
 */
-void Engine::load_obj(const char* file_name) {
+void Engine::load_obj(std::string file_name, glm::mat4 model = glm::mat4(1)) {
+	LOG(1, "Processing OBJ:" + file_name);
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
 
@@ -10,14 +11,16 @@ void Engine::load_obj(const char* file_name) {
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
 	std::string warn, err;
-
-	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, file_name)) {
+	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, file_name.c_str())) {
 		throw std::runtime_error(warn + err);
 	}
+	LOG(2, "Loaded OBJ.");
 
 	std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 
+
 	for (const auto& shape : shapes) {
+		LOG(3, "Shape");
 		for (const auto& index : shape.mesh.indices) {
 			Vertex vertex{};
 
@@ -27,16 +30,20 @@ void Engine::load_obj(const char* file_name) {
 				attrib.vertices[3 * index.vertex_index + 2]
 			};
 
-			vertex.uv_x = attrib.texcoords[2 * index.texcoord_index + 0];
-			vertex.uv_y = 1.0f - attrib.texcoords[2 * index.texcoord_index + 1];
-
 			vertex.col = { 1.0f, 1.0f, 1.0f };
 
-			vertex.normal = {
-				attrib.normals[3 * index.normal_index + 0],
-				attrib.normals[3 * index.normal_index + 1],
-				attrib.normals[3 * index.normal_index + 2]
-			};
+			if (!attrib.normals.empty()) {
+				vertex.normal = {
+					attrib.normals[3 * index.normal_index + 0],
+					attrib.normals[3 * index.normal_index + 1],
+					attrib.normals[3 * index.normal_index + 2]
+				};
+			}
+
+			if (!attrib.texcoords.empty()) {
+				vertex.uv_x = attrib.texcoords[2 * index.texcoord_index + 0];
+				vertex.uv_y = attrib.texcoords[2 * index.texcoord_index + 1];
+			}
 
 			if (uniqueVertices.count(vertex) == 0) {
 				uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
@@ -47,21 +54,26 @@ void Engine::load_obj(const char* file_name) {
 		}
 	}
 
+	LOG(1, "Loaded " + file_name);
 	MeshData mesh = upload_mesh(vertices, indices);
+	mesh.model_mat = model;
 	meshes.push_back(mesh);
-	LOG(1, "Loaded " + std::string(file_name));
+	LOG(1, "Uplodaed " + file_name + " to GPU.");
 }
 
-void Engine::load_gltf(const char* file_name) {
+void Engine::load_gltf(std::string file_name, glm::mat4 model = glm::mat4(1)) {
 	return;
+	LOG(1, "Processing GLTF: " + file_name);
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
 
 	//TODO TinyGltf/Fastgltf Loader
 
+	LOG(1, "Loaded " +file_name);
 	MeshData mesh = upload_mesh(vertices, indices);
+	mesh.model_mat = model;
 	meshes.push_back(mesh);
-	LOG(1, "Loaded " + std::string(file_name));
+	LOG(1, "Uploaded " + file_name + " to GPU.");
 }
 
 /*

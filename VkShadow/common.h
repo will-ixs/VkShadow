@@ -23,27 +23,56 @@
 
 #include "builders.h"
 
-struct {
-
-	//const char* mesh_vert = "E:/Proj/Vs/VkShadow/shaders/spirv/mesh.vert.spv";
-	//const char* mesh_frag = "E:/Proj/Vs/VkShadow/shaders/spirv/mesh.frag.spv";
-	//const char* shadow_vert = "E:/Proj/Vs/VkShadow/shaders/spirv/shadow.vert.spv";
-	//const char* shadow_frag = "E:/Proj/Vs/VkShadow/shaders/spirv/shadow.frag.spv";
-	//const char* bunny_model = "E:/Proj/Vs/VkShadow/models/bunny.obj";
-
-	const char* mesh_vert = "../../shaders/spirv/mesh.vert.spv";
-	const char* mesh_frag = "../../shaders/spirv/mesh.frag.spv";
-	const char* shadow_vert = "../../shaders/spirv/shadow.vert.spv";
-	const char* shadow_frag = "../../shaders/spirv/shadow.frag.spv";
-	const char* bunny_model = "../../models/bunny.obj";
-} file_paths;
-
 enum MESHTYPE
 {
 	OBJ,
 	GLTF,
 	UNDEFINED
 };
+
+struct MeshResource {
+	std::string file_path;
+	glm::mat4 model_mat;
+	MESHTYPE type;
+};
+
+struct {
+
+	//const char* mesh_vert = "E:/Proj/Vs/VkShadow/shaders/spirv/mesh.vert.spv";
+	//const char* mesh_frag = "E:/Proj/Vs/VkShadow/shaders/spirv/mesh.frag.spv";
+	//const char* shadow_vert = "E:/Proj/Vs/VkShadow/shaders/spirv/shadow.vert.spv";
+	//const char* shadow_frag = "E:/Proj/Vs/VkShadow/shaders/spirv/shadow.frag.spv";
+
+	const char* mesh_vert = "../../shaders/spirv/mesh.vert.spv";
+	const char* mesh_frag = "../../shaders/spirv/mesh.frag.spv";
+	const char* shadow_vert = "../../shaders/spirv/shadow.vert.spv";
+	const char* shadow_frag = "../../shaders/spirv/shadow.frag.spv";
+} shader_paths;
+
+struct {
+	//const MeshResource bunny_model = {
+	//	.file_path = "E:/Proj/Vs/VkShadow/models/bunny.obj",
+	//	.model_mat = glm::mat4(1),
+	//	.type = MESHTYPE::OBJ
+	//};
+
+	const MeshResource bunny = {
+		.file_path = "../../models/bunny.obj",
+		.model_mat = glm::mat4(1),
+		.type = MESHTYPE::OBJ
+	};
+	const MeshResource teapot = {
+	.file_path = "../../models/teapot.obj",
+	.model_mat = glm::translate(glm::mat4(1), glm::vec3(2.0f, 0.0f, 0.0f)),
+	.type = MESHTYPE::OBJ
+	};
+	const MeshResource square = {
+	.file_path = "../../models/square.obj",
+	.model_mat = glm::translate(glm::mat4(1), glm::vec3(-2.0f, 0.0f, 0.0f)),
+	.type = MESHTYPE::OBJ
+	};
+} model_res;
+
 
 struct ImageData {
 	VkImage image;
@@ -71,13 +100,12 @@ struct PerFrameData {
 
 //GPU DATA
 struct UniformBufferObject {
-	glm::mat4 model;
-	glm::mat4 view;
-	glm::mat4 proj;
-	glm::mat4 Q;
+	alignas(16)glm::mat4 view;
+	alignas(16)glm::mat4 proj;
+	alignas(16)glm::mat4 Q;
 
-	glm::mat4 light_view;
-	glm::mat4 light_proj;
+	alignas(16)glm::mat4 light_view;
+	alignas(16)glm::mat4 light_proj;
 	alignas(16)glm::vec3 lightpos;
 	alignas(16)glm::vec3 lightcol;
 	alignas(16)glm::vec3 ka;
@@ -87,7 +115,8 @@ struct UniformBufferObject {
 };
 
 struct PushConstants {
-	VkDeviceAddress vb_addr;
+	alignas(16)VkDeviceAddress vb_addr;
+	alignas(16)glm::mat4 model;
 };
 
 struct Light {
@@ -121,5 +150,6 @@ struct MeshData{
 	BufferData index_buffer;
 	BufferData vertex_buffer;
 	VkDeviceAddress vertex_buffer_address;
+	glm::mat4 model_mat;
 	uint32_t index_count;
 };

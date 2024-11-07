@@ -348,11 +348,10 @@ sets default values for ubo
 */
 void Engine::init_ubo_data() {
 	ubo_data = {};
-	ubo_data.model = glm::mat4(1.0f);
 	ubo_data.view = glm::lookAt(glm::vec3(0.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	ubo_data.proj = glm::perspective(glm::radians(70.0f), (16.0f / 9.0f), 0.01f, 100.0f);
 	ubo_data.proj[1][1] *= -1;
-	ubo_data.Q = glm::transpose(glm::inverse(ubo_data.model));
+	ubo_data.Q = glm::mat4(1);
 
 	sun.pos = glm::vec3(0.0f, 5.0f, 1.0f);
 	sun.col = glm::vec3(0.5f, 0.5f, 0.5f);
@@ -449,13 +448,13 @@ creates mesh pipeline & layout
 */
 void Engine::init_mesh_pipeline() {
 	VkShaderModule vert_shader;
-	if (!load_shader(device, &vert_shader, file_paths.mesh_vert)) {
+	if (!load_shader(device, &vert_shader, shader_paths.mesh_vert)) {
 		logger.err("Failed to create mesh vertex shader.");
 	}
 	LOG(3, "Loaded mesh vertex shader.");
 
 	VkShaderModule frag_shader;
-	if (!load_shader(device, &frag_shader, file_paths.mesh_frag)) {
+	if (!load_shader(device, &frag_shader, shader_paths.mesh_frag)) {
 		logger.err("Failed to create mesh fragment shader.");
 	}
 	LOG(3, "Loaded mesh fragment shader.");

@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <fstream>
 #include <thread>
+#include <chrono>
 #include <glm/gtx/transform.hpp>
 
 #include "vk_mem_alloc.h"
@@ -29,17 +30,18 @@ public:
 	bool framebuffer_resized = false;
 	bool use_validation_layers = false;
 	bool use_debug_messenger = false;
-	bool logging_enabled = true;
 	bool minimized = false;
 	void run();
 
 
+	Logger logger;
+	bool logging_enabled = true;
 	//---------------------------------//
 	//Utility - Mesh Loading
 	std::thread mesh_thread;
-	std::queue<std::pair<std::string, MESHTYPE>> mesh_queue;
-	void load_obj(const char* file_name);
-	void load_gltf(const char* file_name);
+	std::queue<MeshResource> mesh_queue;
+	void load_obj(std::string file_name, glm::mat4 model);
+	void load_gltf(std::string file_name, glm::mat4 model);
 
 	//---------------------------------//
 	//Callback Handlers
@@ -53,7 +55,6 @@ private:
 	int window_width = 1280;
 	int window_height = 720;
 
-	Logger logger;
 
 	//Init
 	GLFWwindow* window;
