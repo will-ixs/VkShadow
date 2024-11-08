@@ -20,7 +20,6 @@ void Engine::load_obj(std::string file_name, glm::mat4 model = glm::mat4(1)) {
 
 
 	for (const auto& shape : shapes) {
-		LOG(3, "Shape");
 		for (const auto& index : shape.mesh.indices) {
 			Vertex vertex{};
 
@@ -151,6 +150,8 @@ MeshData Engine::upload_mesh(std::span<Vertex> v, std::span<uint32_t> i) {
 
 	vmaCreateBuffer(vma_allocator, &sbuf_info, &buf_alloc_cpu, &staging_buffer.buffer, &staging_buffer.allocation, &staging_buffer.info);
 
+	LOG(4, "Created vertex, index, staging buffers.");
+
 
 	VkBufferDeviceAddressInfo vdev_addr_info = {};
 	vdev_addr_info.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
@@ -176,6 +177,7 @@ MeshData Engine::upload_mesh(std::span<Vertex> v, std::span<uint32_t> i) {
 	vkCmdCopyBuffer(cmd, staging_buffer.buffer, mesh.index_buffer.buffer, 1, &ind_copy);
 
 	end_single_time_transfer(cmd);
+	LOG(4, "Copied mesh data from staging buffer into vertex and index buffer.");
 
 	vmaDestroyBuffer(vma_allocator, staging_buffer.buffer, staging_buffer.allocation);
 

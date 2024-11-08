@@ -354,7 +354,7 @@ void Engine::init_ubo_data() {
 	ubo_data.Q = glm::mat4(1);
 
 	sun.pos = glm::vec3(0.0f, 5.0f, 1.0f);
-	sun.col = glm::vec3(0.5f, 0.5f, 0.5f);
+	sun.col = glm::vec3(1.0f, 1.0f, 1.0f);
 
 	//light info
 	ubo_data.lightpos = sun.pos;
@@ -365,9 +365,8 @@ void Engine::init_ubo_data() {
 
 	//temp hardcoded material 
 	ubo_data.ka = glm::vec3(0.2f, 0.2f, 0.2f);
-	ubo_data.ks = glm::vec3(0.8f, 0.7f, 0.7f);
-	ubo_data.kd = glm::vec3(1.0f, 1.0f, 1.0f);
-	ubo_data.s = 10.0f;
+	ubo_data.kd = glm::vec3(0.5f, 0.2f, 0.2f);
+	ubo_data.kss = glm::vec4(1.0f, 1.0f, 1.0f, 100.0f);
 
 	memcpy(ubo.info.pMappedData, &ubo_data, sizeof(UniformBufferObject));
 }

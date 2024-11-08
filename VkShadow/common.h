@@ -109,9 +109,9 @@ struct UniformBufferObject {
 	alignas(16)glm::vec3 lightpos;
 	alignas(16)glm::vec3 lightcol;
 	alignas(16)glm::vec3 ka;
-	alignas(16)glm::vec3 ks;
-	glm::vec3 kd;
-	float s;
+	alignas(16)glm::vec3 kd;
+	alignas(16)glm::vec4 kss;
+
 };
 
 struct PushConstants {

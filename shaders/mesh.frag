@@ -8,9 +8,8 @@ layout (binding = 0) uniform UniformBufferObject {
 	vec3 lightpos_world;
 	vec3 lightcol;
 	vec3 ka;
-	vec3 ks;
 	vec3 kd;
-	float n;
+	vec4 kss;
 } ubo;
 
 layout (binding = 1) uniform texture2D _depth_texture;
@@ -24,8 +23,8 @@ layout (location = 0) out vec4 outFragColor;
 
 void main() 
 {	
-	vec3 projCoord = lightPos.xyz / lightPos.w;
-	projCoord = projCoord * 0.5 + 0.5;
+	//vec3 projCoord = lightPos.xyz / lightPos.w;
+	//projCoord = projCoord * 0.5 + 0.5;
 
 	//float depth = texture(sampler2D(_depth_texture, _sampler, projCoord.xy).x;
 	//float coordZ = projCoord.z;
@@ -37,17 +36,20 @@ void main()
 	
 	vec3 currColor = ubo.ka;
 	// if(coordZ - 0.001 < depth || bypass){
-		vec3 eye = vec3(0.0f, 0.0f, 4.0f); 
+		vec3 eye = vec3(0.0f, 2.0f, 2.0f); 
 		vec3 pos = vec3(worldPos);
 		vec3 N = normalize(worldNorm);
 
-
+		vec3 ks = vec3(ubo.kss);
+		float s = ubo.kss.w;
 
 		vec3 Li =  normalize(ubo.lightpos_world - pos);
 		vec3 Ri = normalize(2 * N * dot(Li, N) - Li);
-		vec3 kdS = ubo.kd * max(0, dot(Li, N));
-		vec3 ksS = ubo.ks * pow(max(0, dot(Ri, normalize(eye))),ubo.n);
-		currColor += ubo.lightcol * (kdS + ksS);
+
+		vec3 kd_vec = ubo.kd * max(0, dot(Li, N));
+		vec3 ks_vec = ks * pow(max(0, dot(Ri, normalize(eye))),s);
+		currColor += ubo.lightcol * ks_vec;
+		currColor += ubo.lightcol * kd_vec;
 	// }
-	outFragColor = vec4(worldNorm,1.0f);
+	outFragColor = vec4(currColor,1.0f);
 }
