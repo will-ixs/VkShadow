@@ -229,6 +229,7 @@ void Engine::init_draw_resources() {
 	VkImageUsageFlags shadowmap_usage = {};
 	shadowmap_usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 	shadowmap_usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+	shadowmap_usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 
 	VkImageCreateInfo shadowmap_img_info = {};
 	shadowmap_img_info.imageType = VK_IMAGE_TYPE_2D;
@@ -366,7 +367,7 @@ void Engine::init_ubo_data() {
 	//temp hardcoded material 
 	ubo_data.ka = glm::vec3(0.2f, 0.2f, 0.2f);
 	ubo_data.kd = glm::vec3(0.5f, 0.2f, 0.2f);
-	ubo_data.kss = glm::vec4(1.0f, 1.0f, 1.0f, 100.0f);
+	ubo_data.kss = glm::vec4(1.0f, 1.0f, 1.0f, 10.0f);
 
 	memcpy(ubo.info.pMappedData, &ubo_data, sizeof(UniformBufferObject));
 }
@@ -440,7 +441,7 @@ void Engine::init_descriptors() {
 //Pipelines
 void Engine::init_pipelines() {
 	init_mesh_pipeline();
-	//init_shadow_pipeline();
+	init_shadow_pipeline();
 }
 /*
 creates mesh pipeline & layout
@@ -474,7 +475,7 @@ void Engine::init_mesh_pipeline() {
 
 	VK_CHECK(vkCreatePipelineLayout(device, &layout_info, nullptr, &mesh_pipeline_layout));
 
-	pipeline_builder = {};
+	pipeline_builder.clear();
 	pipeline_builder.pipeline_layout = mesh_pipeline_layout;
 	pipeline_builder.set_shaders(vert_shader, frag_shader);
 	pipeline_builder.set_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
@@ -496,7 +497,50 @@ void Engine::init_mesh_pipeline() {
 
 */
 void Engine::init_shadow_pipeline() {
-	//TODO
+	VkShaderModule vert_shader;
+	if (!load_shader(device, &vert_shader, shader_paths.shadow_vert)) {
+		logger.err("Failed to create shadow vertex shader.");
+	}
+	LOG(3, "Loaded mesh vertex shader.");
+
+	VkShaderModule frag_shader;
+	if (!load_shader(device, &frag_shader, shader_paths.shadow_frag)) {
+		logger.err("Failed to create shadow fragment shader.");
+	}
+	LOG(3, "Loaded mesh fragment shader.");
+
+	VkPushConstantRange pc_range = {};
+	pc_range.offset = 0;
+	pc_range.size = sizeof(PushConstants);
+	pc_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+	VkPipelineLayoutCreateInfo layout_info = {};
+	layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	layout_info.pNext = nullptr;
+	layout_info.flags = 0;
+	layout_info.setLayoutCount = 1;
+	layout_info.pSetLayouts = &global_layout;
+	layout_info.pushConstantRangeCount = 1;
+	layout_info.pPushConstantRanges = &pc_range;
+
+	VK_CHECK(vkCreatePipelineLayout(device, &layout_info, nullptr, &shadow_pipeline_layout));
+	
+	pipeline_builder.clear();
+	pipeline_builder.pipeline_layout = shadow_pipeline_layout;
+	pipeline_builder.set_shaders(vert_shader, frag_shader);
+	pipeline_builder.set_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+	pipeline_builder.set_polygon_mode(VK_POLYGON_MODE_FILL);
+	pipeline_builder.set_culling_mode(VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+	pipeline_builder.set_multisampling_none();
+	pipeline_builder.disable_blending();
+	pipeline_builder.enable_depthtest(VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL);
+	//pipeline_builder.disable_depthtest();
+	//pipeline_builder.set_color_attachment_format(draw_image.format);
+	pipeline_builder.set_depth_attachment_format(shadowmap_image.format);
+	shadow_pipeline = pipeline_builder.build_pipeline(device);
+
+	vkDestroyShaderModule(device, vert_shader, nullptr);
+	vkDestroyShaderModule(device, frag_shader, nullptr);
 }
 
 

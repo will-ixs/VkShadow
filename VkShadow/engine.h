@@ -18,6 +18,7 @@
 
 #include "logger.h"
 #include "common.h"
+#include "builders.h"
 
 #define FRAMES_IN_FLIGHT 2
 
@@ -101,6 +102,7 @@ private:
 
 	Light sun;
 	std::vector<MeshData> meshes;
+	//std::vector<Light> lights;
 
 	//Descriptors
 	DescriptorBuilder descriptor_builder;
@@ -137,6 +139,7 @@ private:
 	//Drawing
 	void draw();
 	void draw_geo(VkCommandBuffer cmd);
+	void draw_shadowmaps(VkCommandBuffer cmd);
 
 	//---------------------------------//
 	//Utility
@@ -146,7 +149,7 @@ private:
 	VkCommandBuffer begin_single_time_transfer();
 	void end_single_time_transfer(VkCommandBuffer cmd);
 
-	void transition_image(VkCommandBuffer cmd, VkImage image, VkImageLayout src, VkImageLayout dst);
+	void transition_image(VkCommandBuffer cmd, VkImage image, TransitionData td);
 	void copy_image(VkCommandBuffer cmd, VkImage src_image, VkImage dst_image, VkExtent2D src_extent, VkExtent2D dst_extent);
 
 	//---------------------------------//

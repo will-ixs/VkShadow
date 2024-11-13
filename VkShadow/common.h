@@ -5,6 +5,7 @@
 #include <glm/gtx/hash.hpp>
 #include <vulkan/vk_enum_string_helper.h>
 
+//Macros
 #define VK_CHECK(x)																	\
 	do{																				\
 		VkResult err = x;															\
@@ -21,7 +22,6 @@
         }																			\
     } while (0)																	
 
-#include "builders.h"
 
 enum MESHTYPE
 {
@@ -88,6 +88,13 @@ struct BufferData {
 	VmaAllocationInfo info;
 };
 
+struct MeshData {
+	BufferData index_buffer;
+	BufferData vertex_buffer;
+	VkDeviceAddress vertex_buffer_address;
+	glm::mat4 model_mat;
+	uint32_t index_count;
+};
 
 struct PerFrameData {
 	VkCommandPool command_pool;
@@ -96,6 +103,17 @@ struct PerFrameData {
 	VkFence render_fence;
 	VkSemaphore render_semaphore;
 	VkSemaphore swapcahin_semaphore;
+};
+
+struct TransitionData {
+	VkPipelineStageFlags2 src_mask;
+	VkPipelineStageFlags2 dst_mask;
+	VkAccessFlags2 src_acc;
+	VkAccessFlags2 dst_acc;
+	VkImageAspectFlags barrier_aspect;
+
+	VkImageLayout src_layout;
+	VkImageLayout dst_layout;
 };
 
 //GPU DATA
@@ -145,11 +163,3 @@ namespace std {
 		}
 	};
 }
-
-struct MeshData{
-	BufferData index_buffer;
-	BufferData vertex_buffer;
-	VkDeviceAddress vertex_buffer_address;
-	glm::mat4 model_mat;
-	uint32_t index_count;
-};

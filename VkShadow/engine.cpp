@@ -27,6 +27,8 @@ Engine::~Engine() {
 
 	vkDestroyPipelineLayout(device, mesh_pipeline_layout, nullptr);
 	vkDestroyPipeline(device, mesh_pipeline, nullptr);
+	vkDestroyPipelineLayout(device, shadow_pipeline_layout, nullptr);
+	vkDestroyPipeline(device, shadow_pipeline, nullptr);
 
 	vkDestroyDescriptorPool(device, descriptor_builder.pool, nullptr);
 	vkDestroyDescriptorSetLayout(device, global_layout, nullptr);

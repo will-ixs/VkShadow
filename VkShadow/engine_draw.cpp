@@ -25,17 +25,44 @@ void Engine::draw() {
 
 	VK_CHECK(vkBeginCommandBuffer(cmd, &cmd_begin_info));
 
-	transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-	transition_image(cmd, depth_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
+	//uber barriers for debug
+	TransitionData td = {};
+	td.barrier_aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
+	td.src_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+	td.dst_layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+
+	td.src_mask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+	td.dst_mask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+	td.src_acc = VK_ACCESS_2_MEMORY_WRITE_BIT;
+	td.dst_acc = VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT;
+
+	transition_image(cmd, shadowmap_image.image, td);
+	draw_shadowmaps(cmd);
+	
+	
+	transition_image(cmd, depth_image.image, td);
+	td.src_layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+	td.dst_layout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL;
+	transition_image(cmd, shadowmap_image.image, td);
+	td.barrier_aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+	td.src_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+	td.dst_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	transition_image(cmd, draw_image.image, td);
 
 	draw_geo(cmd);
 
-	transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-	transition_image(cmd, swapchain_images.at(swapchain_index), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
+	td.src_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	td.dst_layout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+	transition_image(cmd, draw_image.image, td);
+	td.src_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+	td.dst_layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	transition_image(cmd, swapchain_images.at(swapchain_index), td);
+	
 	copy_image(cmd, draw_image.image, swapchain_images.at(swapchain_index), draw_extent, swapchain_extent);
 
-	transition_image(cmd, swapchain_images.at(swapchain_index), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+	td.src_layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	td.dst_layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	transition_image(cmd, swapchain_images.at(swapchain_index), td);
 
 	VK_CHECK(vkEndCommandBuffer(cmd));
 
@@ -129,6 +156,59 @@ void Engine::draw_geo(VkCommandBuffer cmd) {
 	vkCmdBeginRendering(cmd, &rendering_info);
 	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mesh_pipeline);
 	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mesh_pipeline_layout, 0, 1, &global_set, 0, nullptr);
+
+	VkViewport viewport = {};
+	viewport.x = 0;
+	viewport.y = 0;
+	viewport.width = draw_extent.width;
+	viewport.height = draw_extent.height;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+	VkRect2D scissor = {};
+	scissor.offset.x = 0;
+	scissor.offset.y = 0;
+	scissor.extent.width = draw_extent.width;
+	scissor.extent.height = draw_extent.height;
+	vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+
+	PushConstants pcs;
+	for (const MeshData& mesh : meshes) {
+		pcs.vb_addr = mesh.vertex_buffer_address;
+		pcs.model = mesh.model_mat;
+		vkCmdPushConstants(cmd, mesh_pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &pcs);
+		vkCmdBindIndexBuffer(cmd, mesh.index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+		vkCmdDrawIndexed(cmd, mesh.index_count, 1, 0, 0, 0);
+	}
+	vkCmdEndRendering(cmd);
+}
+
+void Engine::draw_shadowmaps(VkCommandBuffer cmd) {
+
+	VkRenderingAttachmentInfo depth_attachment = {};
+	depth_attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+	depth_attachment.pNext = nullptr;
+	depth_attachment.imageView = depth_image.view;
+	depth_attachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+	depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	depth_attachment.clearValue.depthStencil.depth = 1.0f;
+
+	VkRenderingInfo rendering_info = {};
+	rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+	rendering_info.pNext = nullptr;
+	rendering_info.renderArea = VkRect2D{ VkOffset2D { 0, 0 }, draw_extent };
+	rendering_info.layerCount = 1;
+	rendering_info.colorAttachmentCount = 0;
+	rendering_info.pColorAttachments = nullptr;
+	rendering_info.pDepthAttachment = &depth_attachment;
+	rendering_info.pStencilAttachment = nullptr;
+
+	vkCmdBeginRendering(cmd, &rendering_info);
+	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, shadow_pipeline);
+	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, shadow_pipeline_layout, 0, 1, &global_set, 0, nullptr);
 
 	VkViewport viewport = {};
 	viewport.x = 0;

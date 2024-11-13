@@ -217,20 +217,20 @@ void Engine::end_single_time_transfer(VkCommandBuffer cmd) {
 	vkFreeCommandBuffers(device, single_time_pool, 1, &cmd);
 }
 
-void Engine::transition_image(VkCommandBuffer cmd, VkImage image, VkImageLayout src_layout, VkImageLayout dst_layout) {
+void Engine::transition_image(VkCommandBuffer cmd, VkImage image, TransitionData td) {
 	VkImageMemoryBarrier2 image_barrier = {};
 	image_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
 	image_barrier.pNext = nullptr;
 
-	image_barrier.srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
-	image_barrier.srcAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT;
-	image_barrier.dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
-	image_barrier.dstAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT;
+	image_barrier.srcStageMask = td.src_mask;
+	image_barrier.srcAccessMask = td.src_acc;
+	image_barrier.dstStageMask = td.dst_mask;
+	image_barrier.dstAccessMask = td.dst_acc;
 
-	image_barrier.oldLayout = src_layout;
-	image_barrier.newLayout = dst_layout;
+	image_barrier.oldLayout = td.src_layout;
+	image_barrier.newLayout = td.dst_layout;
 
-	VkImageAspectFlags aspect_mask = (dst_layout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
+	VkImageAspectFlags aspect_mask = td.barrier_aspect;
 
 	VkImageSubresourceRange sub_image{};
 	sub_image.aspectMask = aspect_mask;
