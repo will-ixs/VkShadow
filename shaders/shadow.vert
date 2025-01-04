@@ -10,9 +10,8 @@ layout(binding = 0) uniform UniformBufferObject {
 	vec3 lightpos;	
 	vec3 lightcol;
 	vec3 ka;
-	vec3 ks;
 	vec3 kd;
-	float n;
+	vec4 kss;
 } ubo;
 
 struct Vertex {
@@ -28,8 +27,8 @@ layout(buffer_reference, std430) readonly buffer VertexBuffer{
 };
 
 layout( push_constant ) uniform constants{
-	VertexBuffer vertex_buffer;
 	mat4 model;
+	VertexBuffer vertex_buffer;
 } pc;
 
 void main() 

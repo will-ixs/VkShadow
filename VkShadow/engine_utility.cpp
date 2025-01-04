@@ -11,10 +11,10 @@ void Engine::load_obj(std::string file_name, glm::mat4 model = glm::mat4(1)) {
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
 	std::string warn, err;
+
 	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, file_name.c_str())) {
 		throw std::runtime_error(warn + err);
 	}
-	LOG(2, "Loaded OBJ.");
 
 	std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 
@@ -53,11 +53,10 @@ void Engine::load_obj(std::string file_name, glm::mat4 model = glm::mat4(1)) {
 		}
 	}
 
-	LOG(1, "Loaded " + file_name);
 	MeshData mesh = upload_mesh(vertices, indices);
 	mesh.model_mat = model;
 	meshes.push_back(mesh);
-	LOG(1, "Uplodaed " + file_name + " to GPU.");
+	LOG(1, "Uploaded " + file_name + " to GPU.");
 }
 
 void Engine::load_gltf(std::string file_name, glm::mat4 model = glm::mat4(1)) {
@@ -68,7 +67,6 @@ void Engine::load_gltf(std::string file_name, glm::mat4 model = glm::mat4(1)) {
 
 	//TODO TinyGltf/Fastgltf Loader
 
-	LOG(1, "Loaded " +file_name);
 	MeshData mesh = upload_mesh(vertices, indices);
 	mesh.model_mat = model;
 	meshes.push_back(mesh);
@@ -157,7 +155,11 @@ MeshData Engine::upload_mesh(std::span<Vertex> v, std::span<uint32_t> i) {
 	vdev_addr_info.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
 	vdev_addr_info.buffer = mesh.vertex_buffer.buffer;
 	mesh.vertex_buffer_address = vkGetBufferDeviceAddress(device, &vdev_addr_info);
-		
+	
+	if (staging_buffer.info.pMappedData == nullptr) {
+		logger.err("Staging buffer not mapped.");
+	}
+
 	memcpy(staging_buffer.info.pMappedData, v.data(), vbuf_size);
 	memcpy((char*)staging_buffer.info.pMappedData + vbuf_size, i.data(), ibuf_size);
 
@@ -284,4 +286,8 @@ void Engine::copy_image(VkCommandBuffer cmd, VkImage src_image, VkImage dst_imag
 	blit_info.pRegions = &blit;
 
 	vkCmdBlitImage2(cmd, &blit_info);
+}
+
+void Engine::update_uniform_buffer() {
+	//ubo_data.view
 }

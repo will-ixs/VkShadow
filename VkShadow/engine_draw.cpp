@@ -13,6 +13,8 @@ void Engine::draw() {
 		throw std::runtime_error("failed to acqurie swapchain image!");
 	}
 
+	update_uniform_buffer();
+
 	VK_CHECK(vkResetFences(device, 1, &frames.at(frame_number).render_fence));
 	VkCommandBuffer cmd = frames.at(frame_number).command_buffer;
 	VK_CHECK(vkResetCommandBuffer(cmd, 0));
@@ -42,7 +44,7 @@ void Engine::draw() {
 	
 	transition_image(cmd, depth_image.image, td);
 	td.src_layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
-	td.dst_layout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL;
+	td.dst_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	transition_image(cmd, shadowmap_image.image, td);
 	td.barrier_aspect = VK_IMAGE_ASPECT_COLOR_BIT;
 	td.src_layout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -141,7 +143,7 @@ void Engine::draw_geo(VkCommandBuffer cmd) {
 	depth_attachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
 	depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	depth_attachment.clearValue.depthStencil.depth = 1.0f;
+	depth_attachment.clearValue.depthStencil.depth = 0.0f;
 
 	VkRenderingInfo rendering_info = {};
 	rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
@@ -190,16 +192,20 @@ void Engine::draw_shadowmaps(VkCommandBuffer cmd) {
 	VkRenderingAttachmentInfo depth_attachment = {};
 	depth_attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
 	depth_attachment.pNext = nullptr;
-	depth_attachment.imageView = depth_image.view;
+	depth_attachment.imageView = shadowmap_image.view;
 	depth_attachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
 	depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	depth_attachment.clearValue.depthStencil.depth = 1.0f;
+	depth_attachment.clearValue.depthStencil.depth = 0.0f;
+
+	VkExtent2D sm_extent = {};
+	sm_extent.width = shadowmap_image.extent.width;
+	sm_extent.height = shadowmap_image.extent.height;
 
 	VkRenderingInfo rendering_info = {};
 	rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
 	rendering_info.pNext = nullptr;
-	rendering_info.renderArea = VkRect2D{ VkOffset2D { 0, 0 }, draw_extent };
+	rendering_info.renderArea = VkRect2D{ VkOffset2D { 0, 0 }, sm_extent };
 	rendering_info.layerCount = 1;
 	rendering_info.colorAttachmentCount = 0;
 	rendering_info.pColorAttachments = nullptr;
@@ -213,8 +219,8 @@ void Engine::draw_shadowmaps(VkCommandBuffer cmd) {
 	VkViewport viewport = {};
 	viewport.x = 0;
 	viewport.y = 0;
-	viewport.width = draw_extent.width;
-	viewport.height = draw_extent.height;
+	viewport.width = sm_extent.width;
+	viewport.height = sm_extent.height;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 	vkCmdSetViewport(cmd, 0, 1, &viewport);
@@ -222,8 +228,8 @@ void Engine::draw_shadowmaps(VkCommandBuffer cmd) {
 	VkRect2D scissor = {};
 	scissor.offset.x = 0;
 	scissor.offset.y = 0;
-	scissor.extent.width = draw_extent.width;
-	scissor.extent.height = draw_extent.height;
+	scissor.extent.width = sm_extent.width;
+	scissor.extent.height = sm_extent.height;
 	vkCmdSetScissor(cmd, 0, 1, &scissor);
 
 

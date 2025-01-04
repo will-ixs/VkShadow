@@ -23,19 +23,20 @@ layout (location = 0) out vec4 outFragColor;
 
 void main() 
 {	
-	vec3 projCoord = lightPos.xyz / lightPos.w;
-	projCoord = projCoord * 0.5 + 0.5;
+	vec3 pixel_light_ndc = lightPos.xyz / lightPos.w;
+	float pixel_depth = pixel_light_ndc.z;
+	float sampled_depth = texture(sampler2D(_depth_texture, _sampler), (pixel_light_ndc.xy * 0.5 + 0.5)).x;
+	float bias = 0.001;
 
-	float depth = texture(sampler2D(_depth_texture, _sampler), projCoord.xy).x;
-	float coordZ = projCoord.z;
 
 	bool bypass = false;
-	if(projCoord.x < 0.01 || projCoord.x > 0.99 || projCoord.y < 0.01 || projCoord.y > 0.99){
+	vec2 bypassTest = vec2(pixel_light_ndc.x * 0.5 + 0.5, pixel_light_ndc.y * 0.5 + 0.5);
+	if(bypassTest.x < 0.01 || bypassTest.x > 0.99 || bypassTest.y < 0.01 || bypassTest.y > 0.99){
 		bypass = true;	
 	}
 	
 	vec3 currColor = ubo.ka;
-	 if(coordZ - 0.001 < depth || bypass){
+	 if(pixel_depth + bias > sampled_depth || bypass){
 		vec3 eye = vec3(0.0f, 2.0f, 2.0f); 
 		vec3 pos = vec3(worldPos);
 		vec3 N = normalize(worldNorm);

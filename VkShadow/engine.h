@@ -151,7 +151,8 @@ private:
 
 	void transition_image(VkCommandBuffer cmd, VkImage image, TransitionData td);
 	void copy_image(VkCommandBuffer cmd, VkImage src_image, VkImage dst_image, VkExtent2D src_extent, VkExtent2D dst_extent);
-
+	
+	void update_uniform_buffer();
 	//---------------------------------//
 	//Swapchain management
 	void create_swapchain(uint32_t width, uint32_t height);

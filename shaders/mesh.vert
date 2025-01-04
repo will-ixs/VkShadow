@@ -10,9 +10,8 @@ layout(binding = 0) uniform UniformBufferObject {
 	vec3 lightpos;	
 	vec3 lightcol;
 	vec3 ka;
-	vec3 ks;
 	vec3 kd;
-	float n;
+	vec4 kss;
 } ubo;
 
 layout (location = 0) out vec3 worldNorm;
@@ -32,8 +31,8 @@ layout(buffer_reference, std430) readonly buffer VertexBuffer{
 };
 
 layout( push_constant ) uniform constants{
-	VertexBuffer vertex_buffer;
 	mat4 model;
+	VertexBuffer vertex_buffer;
 } pc;
 
 void main() 
@@ -41,8 +40,8 @@ void main()
 	Vertex v = pc.vertex_buffer.vertices[gl_VertexIndex];
 	gl_Position =  ubo.proj * ubo.view * pc.model * vec4(v.position, 1.0f);
 	
-	//worldNorm = normalize(vec3(ubo.Q * vec4(v.normal, 1.0f)));
-	worldNorm = v.normal;
+	worldNorm = normalize(vec3(ubo.Q * vec4(v.normal, 1.0f)));
+	//worldNorm = v.normal;
 	worldPos = pc.model * vec4(v.position, 1.0f);
 	lightPos = ubo.lightproj * ubo.lightview * pc.model * vec4(v.position, 1.0);
 }

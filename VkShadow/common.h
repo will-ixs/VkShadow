@@ -38,22 +38,32 @@ struct MeshResource {
 
 struct {
 
-	//const char* mesh_vert = "E:/Proj/Vs/VkShadow/shaders/spirv/mesh.vert.spv";
-	//const char* mesh_frag = "E:/Proj/Vs/VkShadow/shaders/spirv/mesh.frag.spv";
-	//const char* shadow_vert = "E:/Proj/Vs/VkShadow/shaders/spirv/shadow.vert.spv";
-	//const char* shadow_frag = "E:/Proj/Vs/VkShadow/shaders/spirv/shadow.frag.spv";
+	const char* mesh_vert = "E:/Proj/Vs/VkShadow/shaders/spirv/mesh.vert.spv";
+	const char* mesh_frag = "E:/Proj/Vs/VkShadow/shaders/spirv/mesh.frag.spv";
+	const char* shadow_vert = "E:/Proj/Vs/VkShadow/shaders/spirv/shadow.vert.spv";
+	const char* shadow_frag = "E:/Proj/Vs/VkShadow/shaders/spirv/shadow.frag.spv";
 
-	const char* mesh_vert = "../../shaders/spirv/mesh.vert.spv";
-	const char* mesh_frag = "../../shaders/spirv/mesh.frag.spv";
-	const char* shadow_vert = "../../shaders/spirv/shadow.vert.spv";
-	const char* shadow_frag = "../../shaders/spirv/shadow.frag.spv";
+	//const char* mesh_vert = "../../shaders/spirv/mesh.vert.spv";
+	//const char* mesh_frag = "../../shaders/spirv/mesh.frag.spv";
+	//const char* shadow_vert = "../../shaders/spirv/shadow.vert.spv";
+	//const char* shadow_frag = "../../shaders/spirv/shadow.frag.spv";
 } shader_paths;
 
 struct {
-	//const MeshResource bunny_model = {
+	//const MeshResource bunny = {
 	//	.file_path = "E:/Proj/Vs/VkShadow/models/bunny.obj",
 	//	.model_mat = glm::mat4(1),
 	//	.type = MESHTYPE::OBJ
+	//};
+	//const MeshResource teapot = {
+	//.file_path = "E:/Proj/Vs/VkShadow/models/teapot.obj",
+	//.model_mat = glm::translate(glm::mat4(1), glm::vec3(2.0f, 0.0f, 0.0f)),
+	//.type = MESHTYPE::OBJ
+	//};
+	//const MeshResource square = {
+	//.file_path = "E:/Proj/Vs/VkShadow/models/square.obj",
+	//.model_mat = glm::rotate(glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f)),
+	//.type = MESHTYPE::OBJ
 	//};
 
 	const MeshResource bunny = {
@@ -121,7 +131,20 @@ struct UniformBufferObject {
 	alignas(16)glm::mat4 view;
 	alignas(16)glm::mat4 proj;
 	alignas(16)glm::mat4 Q;
+	alignas(16)glm::mat4 light_view;
+	alignas(16)glm::mat4 light_proj;
+	alignas(16)glm::vec3 lightpos;
+	alignas(16)glm::vec3 lightcol;
+	alignas(16)glm::vec3 ka;
+	alignas(16)glm::vec3 kd;
+	alignas(16)glm::vec4 kss;
+};
+/* TODO
+struct GeoUniformBufferObject {
+	alignas(16)glm::mat4 view_proj;
+	alignas(16)glm::mat4 Q;
 
+	//temp change to device address for light buffer, lightsize, device address for material buffer
 	alignas(16)glm::mat4 light_view;
 	alignas(16)glm::mat4 light_proj;
 	alignas(16)glm::vec3 lightpos;
@@ -131,10 +154,14 @@ struct UniformBufferObject {
 	alignas(16)glm::vec4 kss;
 
 };
-
+struct ShadowmapUniformBufferObject {
+	alignas(16)glm::mat4 light_view_proj;
+};
+*/
 struct PushConstants {
-	alignas(16)VkDeviceAddress vb_addr;
 	alignas(16)glm::mat4 model;
+	alignas(16)VkDeviceAddress vb_addr;
+	//alignas(8) uint32_t material_index
 };
 
 struct Light {

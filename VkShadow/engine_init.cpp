@@ -185,7 +185,7 @@ void Engine::init_draw_resources() {
 
 
 	//Initialize depth image for draw image
-	depth_image.format = VK_FORMAT_D16_UNORM;
+	depth_image.format = VK_FORMAT_D32_SFLOAT;
 	depth_image.extent = draw_img_extent;
 
 	VkImageUsageFlags depth_img_uses = {};
@@ -223,7 +223,7 @@ void Engine::init_draw_resources() {
 	shadowmap_extent.height = 1024;
 	shadowmap_extent.depth = 1;
 
-	shadowmap_image.format = VK_FORMAT_D16_UNORM;
+	shadowmap_image.format = VK_FORMAT_D32_SFLOAT;
 	shadowmap_image.extent = shadowmap_extent;
 
 	VkImageUsageFlags shadowmap_usage = {};
@@ -235,8 +235,8 @@ void Engine::init_draw_resources() {
 	shadowmap_img_info.imageType = VK_IMAGE_TYPE_2D;
 	shadowmap_img_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	shadowmap_img_info.pNext = nullptr;
-	shadowmap_img_info.format = depth_image.format;
-	shadowmap_img_info.extent = depth_image.extent;
+	shadowmap_img_info.format = shadowmap_image.format;
+	shadowmap_img_info.extent = shadowmap_image.extent;
 	shadowmap_img_info.usage = shadowmap_usage;
 	shadowmap_img_info.mipLevels = 1;
 	shadowmap_img_info.arrayLayers = 1;
@@ -350,7 +350,7 @@ sets default values for ubo
 void Engine::init_ubo_data() {
 	ubo_data = {};
 	ubo_data.view = glm::lookAt(glm::vec3(0.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	ubo_data.proj = glm::perspective(glm::radians(70.0f), (16.0f / 9.0f), 0.01f, 100.0f);
+	ubo_data.proj = glm::perspectiveFovZO(glm::radians(70.0f), 1600.0f, 900.0f, 5.0f, 0.5f);
 	ubo_data.proj[1][1] *= -1;
 	ubo_data.Q = glm::mat4(1);
 
@@ -361,7 +361,7 @@ void Engine::init_ubo_data() {
 	ubo_data.lightpos = sun.pos;
 	ubo_data.lightcol = sun.col;
 	ubo_data.light_view = glm::lookAt(sun.pos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	ubo_data.light_proj = glm::perspective(glm::radians(60.0f), 1.0f, 10000.0f, 0.1f);
+	ubo_data.light_proj = glm::perspectiveFovZO(glm::radians(90.0f), 1024.0f, 1024.0f, 5.0f, 0.5f);
 	ubo_data.light_proj[1][1] *= -1;
 
 	//temp hardcoded material 
@@ -483,7 +483,7 @@ void Engine::init_mesh_pipeline() {
 	pipeline_builder.set_culling_mode(VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
 	pipeline_builder.set_multisampling_none();
 	pipeline_builder.disable_blending();
-	pipeline_builder.enable_depthtest(VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL);
+	pipeline_builder.enable_depthtest(VK_TRUE, VK_COMPARE_OP_GREATER_OR_EQUAL);
 	//pipeline_builder.disable_depthtest();
 	pipeline_builder.set_color_attachment_format(draw_image.format);
 	pipeline_builder.set_depth_attachment_format(depth_image.format);
@@ -530,10 +530,10 @@ void Engine::init_shadow_pipeline() {
 	pipeline_builder.set_shaders(vert_shader, frag_shader);
 	pipeline_builder.set_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 	pipeline_builder.set_polygon_mode(VK_POLYGON_MODE_FILL);
-	pipeline_builder.set_culling_mode(VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+	pipeline_builder.set_culling_mode(VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE);
 	pipeline_builder.set_multisampling_none();
 	pipeline_builder.disable_blending();
-	pipeline_builder.enable_depthtest(VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL);
+	pipeline_builder.enable_depthtest(VK_TRUE, VK_COMPARE_OP_GREATER_OR_EQUAL);
 	//pipeline_builder.disable_depthtest();
 	//pipeline_builder.set_color_attachment_format(draw_image.format);
 	pipeline_builder.set_depth_attachment_format(shadowmap_image.format);
