@@ -16,6 +16,7 @@ Based on [vkguide](https://vkguide.dev): Inspired by vkguide by vblanco, followi
 
 This project was started without a build system, as it was just intended to learn. There is a release available if you just want to run it.
 
+The following environment variables will need to be set. Build with F7 and run from its built directoryu.
 
 This visual studio project uses environment variables for the includes and linking, \
 STB_DIR points to stb, a folder containing [stb_image.h](https://github.com/nothings/stb/blob/master/stb_image.h) \
